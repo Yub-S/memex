@@ -1,0 +1,5 @@
+streamlit
+snowflake-connector-python[pandas]
+snowflake-snowpark-python
+python-dotenv
+snowflake.core==1.0.0
