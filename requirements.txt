@@ -1,3 +1,4 @@
+streamlit
 trulens-core 
 trulens-providers-cortex 
 trulens-connectors-snowflake 
