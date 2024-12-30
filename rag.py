@@ -1,4 +1,3 @@
-
 from snowflake.snowpark.session import Session
 from snowflake.cortex import Complete
 from snowflake.core import Root
@@ -22,47 +21,6 @@ connection_parameters = {
 snowpark_session = Session.builder.configs(connection_parameters).create()
 
 root = Root(snowpark_session)
-=======
-from snowflake.connector import connect
-from snowflake.snowpark.session import Session
-from snowflake.core import Root
-import os
-from dotenv import load_dotenv
-import json
-from datetime import datetime
-
-# Load environment variables
-load_dotenv()
-
-# Snowflake connection configuration remains the same
-def create_snowflake_session():
-    connection_parameters = {
-        "account": os.getenv("SNOWFLAKE_ACCOUNT"),
-        "user": os.getenv("SNOWFLAKE_USER"),
-        "password": os.getenv("SNOWFLAKE_PASSWORD"),
-        "warehouse": os.getenv("SNOWFLAKE_WAREHOUSE"),
-        "database": os.getenv("SNOWFLAKE_DATABASE"),
-        "schema": os.getenv("SNOWFLAKE_SCHEMA"),
-        "role": os.getenv("SNOWFLAKE_ROLE"),
-        "login_timeout": 30,
-        "network_timeout": 30,
-        "retry_on_connection_error": True,
-        "max_connection_retries": 3
-    }
-    
-    try:
-        session = Session.builder.configs(connection_parameters).create()
-        return session
-    except Exception as e:
-        print(f"Failed to create Snowflake session: {e}")
-        return None
-
-# Initialize session with error handling
-session = create_snowflake_session()
-if session is None:
-    print("Could not establish connection to Snowflake")
-
-root = Root(session)
 
 # Configuration
 DATABASE = os.getenv("SNOWFLAKE_DATABASE")
@@ -118,7 +76,6 @@ def standardize_dates(text, is_query=False):
         
         # Make LLM call using existing Snowflake Mixtral integration
         response = snowpark_session.sql("""
-
             select snowflake.cortex.complete(?, ?) as response
         """, params=['mistral-large2', prompt]).collect()
         
@@ -128,7 +85,6 @@ def standardize_dates(text, is_query=False):
     except Exception as e:
         print(f"Error standardizing dates: {e}")
         return text
-
 
 
 class CortexSearchRetriever:
@@ -172,12 +128,13 @@ class RAG_from_scratch:
         """
         Generate answer from context.
         """
-        prompt = f"""You are a personal AI assistant who helps the user recall and elaborate on their past thoughts, plans, and discussions.ext):
+        prompt = f"""You are a personal AI assistant who helps the user recall and elaborate on their past thoughts, plans, and discussions.
         You have access to the user's personal notes and memories.
 
         Context of previous discussions:
         <context>
-        {context_text}
+        {context_str}
+        </context>
 
         User's current question: {query}
 
