@@ -3,3 +3,4 @@ trulens-core
 trulens-providers-cortex 
 trulens-connectors-snowflake 
 snowflake-core
+snowflake-snowpark-python

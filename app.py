@@ -1,11 +1,11 @@
 import streamlit as st
-from rag import RAG_from_SCRATCH, standardize_dates, get_current_date_info, inject_information
+from rag import RAG_from_scratch, standardize_dates, get_current_date_info, inject_information
 
 def main():
     # Set page configuration
     st.set_page_config(page_title="MindbookLM", layout="wide")
     
-    rag = RAG_from_SCRATCH()
+    rag = RAG_from_scratch()
     # Custom CSS for the toggle switch
     st.markdown("""
         <style>

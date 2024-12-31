@@ -7,28 +7,21 @@ from datetime import datetime
 import os
 
 load_dotenv()
+def establish_connection():
+    connection_parameters = {
+        "account": os.getenv("SNOWFLAKE_ACCOUNT"),
+        "user": os.getenv("SNOWFLAKE_USER"),
+        "password": os.getenv("SNOWFLAKE_PASSWORD"),
+        "warehouse": os.getenv("SNOWFLAKE_WAREHOUSE"),
+        "database": os.getenv("SNOWFLAKE_DATABASE"),
+        "schema": os.getenv("SNOWFLAKE_SCHEMA"),
+        "role": os.getenv("SNOWFLAKE_ROLE"),
+    }
 
-connection_parameters = {
-    "account": os.getenv("SNOWFLAKE_ACCOUNT"),
-    "user": os.getenv("SNOWFLAKE_USER"),
-    "password": os.getenv("SNOWFLAKE_PASSWORD"),
-    "warehouse": os.getenv("SNOWFLAKE_WAREHOUSE"),
-    "database": os.getenv("SNOWFLAKE_DATABASE"),
-    "schema": os.getenv("SNOWFLAKE_SCHEMA"),
-    "role": os.getenv("SNOWFLAKE_ROLE"),
-}
+    snowpark_session = Session.builder.configs(connection_parameters).create()
+    return snowpark_session
 
-snowpark_session = Session.builder.configs(connection_parameters).create()
-
-root = Root(snowpark_session)
-
-# Configuration
-DATABASE = os.getenv("SNOWFLAKE_DATABASE")
-SCHEMA = os.getenv("SNOWFLAKE_SCHEMA")
-TABLE = "TEXT_PARAGRAPHS_TABLE"
-CORTEX_SEARCH_SERVICE = "CC_SEARCH_SERVICE_CS"
-
-#svc = root.databases[DATABASE].schemas[SCHEMA].cortex_search_services[CORTEX_SEARCH_SERVICE]
+snowpark_session = establish_connection()
 
 def inject_information(text_content):
     try:
@@ -89,7 +82,7 @@ def standardize_dates(text, is_query=False):
 
 class CortexSearchRetriever:
 
-    def __init__(self, snowpark_session: Session, limit_to_retrieve: int = 3):
+    def __init__(self, snowpark_session, limit_to_retrieve: int = 4):
         self._snowpark_session = snowpark_session
         self._limit_to_retrieve = limit_to_retrieve
 
@@ -115,7 +108,7 @@ class CortexSearchRetriever:
 class RAG_from_scratch:
 
     def __init__(self):
-        self.retriever = CortexSearchRetriever(snowpark_session=snowpark_session, limit_to_retrieve=4)
+        self.retriever = CortexSearchRetriever(snowpark_session, limit_to_retrieve=4)
 
     def retrieve_context(self, query: str) -> list:
         """
@@ -151,6 +144,11 @@ class RAG_from_scratch:
         context_str = self.retrieve_context(query)
         return self.generate_completion(query, context_str)
 
+# testing
+def main ():
+    rag = RAG_from_scratch() 
+    print(rag.query("what was my christmas this year like"))
 
-rag = RAG_from_scratch() 
-print(rag.query("what was my christmas this year like"))
+
+if  __name__ == "__main__":
+    main()
