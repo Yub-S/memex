@@ -1,42 +1,153 @@
 import streamlit as st
 from rag import RAG_from_scratch, standardize_dates, get_current_date_info, inject_information
+import time
 
-def main():
-    # Set page configuration
-    st.set_page_config(page_title="MindbookLM", layout="wide")
-    
-    rag = RAG_from_scratch()
-    # Custom CSS for the toggle switch
+def local_css():
     st.markdown("""
         <style>
-        .stRadio [role=radiogroup] {
-            display: none;
+        /* Custom styling for the main title */
+        .main-title {
+            color: #1E88E5;
+            font-size: 1.8rem !important;
+            font-weight: 700;
+            margin-bottom: 0;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        /* Gradient background for the sidebar */
+        section[data-testid="stSidebar"] {
+            background-image: linear-gradient(180deg, #f0f8ff, #ffffff);
+        }
+        
+        /* Text area styling */
+        .stTextArea textarea {
+            border-radius: 10px;
+            border: 2px solid #e0e0e0;
+            transition: border 0.3s ease;
+            font-size: 1.1rem;
+        }
+        
+        .stTextArea textarea:focus {
+            border-color: #1E88E5;
+            box-shadow: 0 0 0 2px rgba(30,136,229,0.2);
+        }
+        
+        /* Custom button styling */
+        .stButton button {
+            border-radius: 4px;
+            transition: all 0.3s ease;
+            background-color: #1E88E5;
+            color: white;
+            font-weight: 500;
+            padding: 0.3rem 1rem;
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+        }
+        
+        .stButton button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            background-color: #1976D2;
+        }
+
+        /* Modern heading styles */
+        .modern-header {
+            font-size: 2.2rem !important;
+            font-weight: 600 !important;
+            color: #1E88E5;
+            margin-bottom: 0.5rem !important;
+            margin-top: -2rem !important;
+        }
+        
+        .modern-subheader {
+            font-size: 1.1rem !important;
+            color: #666;
+            margin-bottom: 1rem !important;
+        }
+        
+        /* Toggle button styling */
+        .stToggleButton {
+            scale: 1.2;
+        }
+
+        /* Container styling for vertical centering */
+        .content-container {
+            margin-top: -3rem;
+        }
+
+        /* Center align elements */
+        div[data-testid="column"] {
+            text-align: center;
+        }
+
+        /* Message alignment */
+        .stSpinner, div.stAlert {
+            display: inline-block;
+            margin: 0 0.5rem;
+        }
+
+        /* Mode indicator styling */
+        .mode-indicator {
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+            text-align: center;
+        }
+
+        .chat-mode {
+            background-color: rgba(25, 135, 84, 0.1);
+            color: rgb(25, 135, 84);
+            border: 1px solid rgba(25, 135, 84, 0.2);
+        }
+
+        .storage-mode {
+            background-color: rgba(13, 110, 253, 0.1);
+            color: rgb(13, 110, 253);
+            border: 1px solid rgba(13, 110, 253, 0.2);
         }
         </style>
     """, unsafe_allow_html=True)
+
+def main():
+    st.set_page_config(
+        page_title="MindbookLM",
+        layout="wide",
+        initial_sidebar_state="expanded"
+    )
     
-    # Sidebar 
+    local_css()
+    rag = RAG_from_scratch()
+
+    # Sidebar with refined styling
     with st.sidebar:
-        st.title("🧠 MindbookLM")
+        st.markdown('<p class="main-title">🧠 MindbookLM</p>', unsafe_allow_html=True)
         st.markdown("*Your digital memory companion*")
         st.markdown("---")
         
-        # Create a toggle switch using columns with description
-        st.markdown("##### Mode Selection")
-        st.caption("Toggle to change Mode")
-        col1, col2, col3 = st.columns([1,2,1])
-        with col2:
-            mode = st.toggle("Chat Mode", value=False) 
-        st.caption("Currently in: " + ("Chat Mode" if mode else "Memory Storage Mode"))
+        # Enhanced Mode Selection
+        st.markdown("##### 🔄 Mode Selection")
+        mode = st.toggle("Enable Chat Mode", value=False, key="mode_toggle")
+        
+        # Visual indicator for current mode with styled box
+        if mode:
+            st.markdown('<div class="mode-indicator chat-mode">🗣️ Chat Mode Active</div>', unsafe_allow_html=True)
+        else:
+            st.markdown('<div class="mode-indicator storage-mode">💾 Memory Storage Mode Active</div>', unsafe_allow_html=True)
         st.markdown("---")
 
     if 'messages' not in st.session_state:
         st.session_state.messages = []
 
-    if not mode:  # Inject Mode 
-        st.markdown("### Inject Memory")
-        st.markdown("Share your thoughts, experiences, notes or plans below.")
+    # Main content area
+    if not mode:  # Modern Inject Mode with original text
+        st.markdown('<div class="content-container">', unsafe_allow_html=True)
+        st.markdown('<h1 class="modern-header">Inject Memory</h1>', unsafe_allow_html=True)
+        st.markdown('<p class="modern-subheader">Share your thoughts, experiences, notes or plans below.</p>', unsafe_allow_html=True)
         
+        # Main text area
         new_info = st.text_area(
             label="",
             height=200,
@@ -44,23 +155,25 @@ def main():
             key="memory_input"
         )
         
+        # Centered compact save button and status messages
         col1, col2, col3 = st.columns([2,1,2])
         with col2:
-            if st.button("💾 Save Memory", use_container_width=True):
+            if st.button("💾 Save Memory"):
                 if new_info:
-                    with st.spinner("Saving your memory..."):
+                    # Show spinner while saving
+                    with st.spinner("Saving..."):
                         if inject_information(new_info):
                             st.success("Memory saved successfully!")
                 else:
                     st.warning("Please enter a memory to save.")
-    
-    else:  # Chat Mode
         
+        st.markdown('</div>', unsafe_allow_html=True)
+    
+    else:  # Original Chat Mode
         for message in st.session_state.messages:
             with st.chat_message(message["role"]):
                 st.markdown(message["content"])
 
-        # Chat input
         if prompt := st.chat_input("Ask about your memories..."):
             with st.chat_message("user"):
                 st.markdown(prompt)
