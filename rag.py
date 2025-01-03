@@ -4,7 +4,15 @@ from snowflake.core import Root
 from dotenv import load_dotenv
 from typing import List
 from datetime import datetime
+from trulens.core import TruSession
+from trulens.connectors.snowflake import SnowflakeConnector
+from trulens.apps.custom import instrument
+from trulens.core.guardrails.base import context_filter
 import os
+from trulens.providers.cortex.provider import Cortex
+from trulens.core import Feedback
+from trulens.core import Select
+import numpy as np
 
 load_dotenv()
 def establish_connection():
@@ -23,6 +31,18 @@ def establish_connection():
 
 snowpark_session = establish_connection()
 
+# tru_snowflake_connector = SnowflakeConnector(snowpark_session=snowpark_session)
+# tru_session = TruSession(connector=tru_snowflake_connector)
+
+provider = Cortex(
+    snowpark_session,
+    model_engine="mistral-large2",
+)
+
+f_context_relevance_score = Feedback(
+    provider.context_relevance, name="Context Relevance"
+)
+
 def inject_information(text_content):
     try:
         # Standardize dates before injection
@@ -32,7 +52,9 @@ def inject_information(text_content):
         INSERT INTO TEXT_PARAGRAPHS_TABLE (TEXT_CONTENT)
         VALUES (?)
         """
-        snowpark_session.sql(query, params=[standardized_text]).collect()
+        result = snowpark_session.sql(query, params=[standardized_text]).collect()
+        snowpark_session.sql("COMMIT").collect()
+        print(result)
         return True
     except Exception as e:
         print(f"Error injecting information: {e}")
@@ -104,19 +126,21 @@ class CortexSearchRetriever:
         else:
             return []
 
-
 class RAG_from_scratch:
 
     def __init__(self):
-        self.retriever = CortexSearchRetriever(snowpark_session, limit_to_retrieve=4)
+        self.retriever = CortexSearchRetriever(snowpark_session=snowpark_session, limit_to_retrieve=4)
 
+    @instrument
+    @context_filter(f_context_relevance_score, 0.4, keyword_for_prompt="query")
     def retrieve_context(self, query: str) -> list:
         """
         Retrieve relevant text from vector store.
         """
-        standard_query = standardize_dates(query,is_query=True)
+        standard_query = standardize_dates(query)
         return self.retriever.retrieve(standard_query)
 
+    @instrument
     def generate_completion(self, query: str, context_str: list) -> str:
         """
         Generate answer from context.
@@ -140,15 +164,15 @@ class RAG_from_scratch:
         """
         return Complete("mistral-large2", prompt)
 
+    @instrument
     def query(self, query: str) -> str:
         context_str = self.retrieve_context(query)
+        print(context_str)
         return self.generate_completion(query, context_str)
 
 # testing
 def main ():
     rag = RAG_from_scratch() 
-    print(rag.query("what was my christmas this year like"))
-
 
 if  __name__ == "__main__":
     main()

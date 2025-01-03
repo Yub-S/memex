@@ -108,12 +108,56 @@ def local_css():
             color: rgb(13, 110, 253);
             border: 1px solid rgba(13, 110, 253, 0.2);
         }
+
+        /* Updated Typing indicator container */
+        .typing-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 2px;  /* Reduced gap between dots */
+            padding: 8px 12px;  /* Reduced padding */
+            background: #f0f2f6;
+            border-radius: 12px;  /* Adjusted for smaller size */
+            margin: 2px 0;
+            transform: scale(0.85);  /* Slightly reduce overall size */
+            transform-origin: left center;
+        }
+        
+        /* Updated Dots styling */
+        .typing-dot {
+            width: 5px;  /* Smaller dots */
+            height: 5px;  /* Smaller dots */
+            background: #1E88E5;
+            border-radius: 50%;
+            opacity: 0.7;  /* Slightly increased opacity */
+            animation: typing-bubble 0.8s infinite;  /* Faster animation */
+        }
+        
+        /* Updated Animation for each dot */
+        @keyframes typing-bubble {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-3px); }  /* Smaller bounce height */
+        }
+        
+        /* Updated Delay for each dot */
+        .typing-dot:nth-child(1) { animation-delay: 0s; }
+        .typing-dot:nth-child(2) { animation-delay: 0.15s; }  /* Faster sequence */
+        .typing-dot:nth-child(3) { animation-delay: 0.3s; }   /* Faster sequence */
         </style>
     """, unsafe_allow_html=True)
 
+def typing_indicator():
+    typing_html = """
+        <div class="typing-indicator">
+            <div class="typing-dot"></div>
+            <div class="typing-dot"></div>
+            <div class="typing-dot"></div>
+        </div>
+    """
+    return st.markdown(typing_html, unsafe_allow_html=True)
+
 def main():
     st.set_page_config(
-        page_title="MindbookLM",
+        page_title="memex",
         layout="wide",
         initial_sidebar_state="expanded"
     )
@@ -123,7 +167,7 @@ def main():
 
     # Sidebar with refined styling
     with st.sidebar:
-        st.markdown('<p class="main-title">🧠 MindbookLM</p>', unsafe_allow_html=True)
+        st.markdown('<p class="main-title">🧠 memex </p>', unsafe_allow_html=True)
         st.markdown("*Your digital memory companion*")
         st.markdown("---")
         
@@ -142,7 +186,7 @@ def main():
         st.session_state.messages = []
 
     # Main content area
-    if not mode:  # Modern Inject Mode with original text
+    if not mode:  # Memory Storage Mode
         st.markdown('<div class="content-container">', unsafe_allow_html=True)
         st.markdown('<h1 class="modern-header">Inject Memory</h1>', unsafe_allow_html=True)
         st.markdown('<p class="modern-subheader">Share your thoughts, experiences, notes or plans below.</p>', unsafe_allow_html=True)
@@ -160,28 +204,52 @@ def main():
         with col2:
             if st.button("💾 Save Memory"):
                 if new_info:
-                    # Show spinner while saving
                     with st.spinner("Saving..."):
-                        if inject_information(new_info):
+                        success = inject_information(new_info)
+                        if success:
                             st.success("Memory saved successfully!")
+                        else:
+                            st.error("Failed to save memory. Please try again.")
                 else:
                     st.warning("Please enter a memory to save.")
         
         st.markdown('</div>', unsafe_allow_html=True)
     
-    else:  # Original Chat Mode
+    else:  # Chat Mode 
+        # Display existing messages
         for message in st.session_state.messages:
             with st.chat_message(message["role"]):
                 st.markdown(message["content"])
 
+        # Handle new user input
         if prompt := st.chat_input("Ask about your memories..."):
+            # Display user message
             with st.chat_message("user"):
                 st.markdown(prompt)
             st.session_state.messages.append({"role": "user", "content": prompt})
 
-            with st.chat_message("assistant"):
-                response = rag.query(prompt)
-                st.markdown(response)
+            # Display assistant response with typing indicator
+            assistant_placeholder = st.chat_message("assistant")
+            with assistant_placeholder:
+                # Show typing indicator
+                typing_container = st.empty()
+                typing_container.markdown(
+                    """
+                    <div class="typing-indicator">
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
+                
+                # Get response from RAG
+                time.sleep(0.5)  # Optional: Small delay for better UX
+                response = rag.query(standardize_dates(prompt,True))
+                
+                # Replace typing indicator with response
+                typing_container.markdown(response)
                 st.session_state.messages.append({"role": "assistant", "content": response})
 
 if __name__ == "__main__":
