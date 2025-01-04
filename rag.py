@@ -54,7 +54,7 @@ def inject_information(text_content):
         """
         result = snowpark_session.sql(query, params=[standardized_text]).collect()
         snowpark_session.sql("COMMIT").collect()
-        print(result)
+        #print(result)
         return True
     except Exception as e:
         print(f"Error injecting information: {e}")
@@ -87,14 +87,12 @@ def standardize_dates(text, is_query=False):
                "(Note recorded on {current_date['full_date']} at {current_date['time']})"
             
             Original text: "{text}"
-            Only output the converted text with no explanations or additional text."""
+            Only output the converted text  with no explanations or additional text."""
         
         # Make LLM call using existing Snowflake Mixtral integration
-        response = snowpark_session.sql("""
-            select snowflake.cortex.complete(?, ?) as response
-        """, params=['mistral-large2', prompt]).collect()
+        response = Complete("mistral-large2", prompt)
         
-        standardized_text = response[0].RESPONSE if response else text
+        standardized_text = response if response else text
         return standardized_text.strip('"').strip()
     
     except Exception as e:
@@ -113,7 +111,7 @@ class CortexSearchRetriever:
         cortex_search_service = (
             root.databases[os.getenv("SNOWFLAKE_DATABASE")]
             .schemas[os.getenv("SNOWFLAKE_SCHEMA")]
-            .cortex_search_services["CC_SEARCH_SERVICE_CS"]
+            .cortex_search_services["MINDBOOK_SEARCH_SERVICE"]
         )
         resp = cortex_search_service.search(
             query=query,
@@ -137,7 +135,7 @@ class RAG_from_scratch:
         """
         Retrieve relevant text from vector store.
         """
-        standard_query = standardize_dates(query)
+        standard_query = standardize_dates(query, is_query=True)
         return self.retriever.retrieve(standard_query)
 
     @instrument
@@ -172,7 +170,7 @@ class RAG_from_scratch:
 
 # testing
 def main ():
-    rag = RAG_from_scratch() 
+    rag = RAG_from_scratch()
 
 if  __name__ == "__main__":
     main()

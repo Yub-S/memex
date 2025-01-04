@@ -155,6 +155,11 @@ def typing_indicator():
     """
     return st.markdown(typing_html, unsafe_allow_html=True)
 
+def clear_on_success():
+    if 'text_key' not in st.session_state:
+        st.session_state.text_key = 0
+    st.session_state.text_key += 1
+
 def main():
     st.set_page_config(
         page_title="memex",
@@ -185,6 +190,9 @@ def main():
     if 'messages' not in st.session_state:
         st.session_state.messages = []
 
+    if 'show_success' not in st.session_state:
+        st.session_state.show_success = False
+
     # Main content area
     if not mode:  # Memory Storage Mode
         st.markdown('<div class="content-container">', unsafe_allow_html=True)
@@ -192,14 +200,14 @@ def main():
         st.markdown('<p class="modern-subheader">Share your thoughts, experiences, notes or plans below.</p>', unsafe_allow_html=True)
         
         # Main text area
+        text_key = f"memory_input_{st.session_state.get('text_key', 0)}"
         new_info = st.text_area(
             label="",
             height=200,
             placeholder="Type your memory here...",
-            key="memory_input"
+            key=text_key
         )
         
-        # Centered compact save button and status messages
         col1, col2, col3 = st.columns([2,1,2])
         with col2:
             if st.button("💾 Save Memory"):
@@ -207,12 +215,22 @@ def main():
                     with st.spinner("Saving..."):
                         success = inject_information(new_info)
                         if success:
-                            st.success("Memory saved successfully!")
+                            st.session_state.show_success = True
                         else:
                             st.error("Failed to save memory. Please try again.")
                 else:
                     st.warning("Please enter a memory to save.")
         
+        with col3:
+            if st.session_state.show_success:
+                st.success("Memory saved successfully!")
+                time.sleep(1.5)  
+                st.session_state.show_success = False  
+
+                # Clear the input field after displaying the message
+                clear_on_success()
+                st.rerun()  
+
         st.markdown('</div>', unsafe_allow_html=True)
     
     else:  # Chat Mode 
@@ -244,9 +262,9 @@ def main():
                     unsafe_allow_html=True
                 )
                 
-                # Get response from RAG
-                time.sleep(0.5)  # Optional: Small delay for better UX
-                response = rag.query(standardize_dates(prompt,True))
+                # # Get response from RAG
+                # time.sleep(0.5)  # Optional: Small delay for better UX
+                response = rag.query(prompt)
                 
                 # Replace typing indicator with response
                 typing_container.markdown(response)
