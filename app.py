@@ -1,5 +1,5 @@
 import streamlit as st
-from rag import RAG_from_scratch, standardize_dates, get_current_date_info, inject_information
+from rag import RAG_from_scratch, establish_connection, DateStandardizer
 import time
 
 def local_css():
@@ -160,6 +160,18 @@ def clear_on_success():
         st.session_state.text_key = 0
     st.session_state.text_key += 1
 
+def initialize_session():
+    """Initialize Snowflake session and RAG instance if not already in session state"""
+    if 'snowflake_session' not in st.session_state:
+        st.session_state.snowflake_session = establish_connection()
+    
+    if 'rag' not in st.session_state:
+        st.session_state.rag = RAG_from_scratch(st.session_state.snowflake_session)
+        
+    if 'date_standardizer' not in st.session_state:
+        st.session_state.date_standardizer = DateStandardizer(st.session_state.snowflake_session)
+
+
 def main():
     st.set_page_config(
         page_title="memex",
@@ -168,7 +180,9 @@ def main():
     )
     
     local_css()
-    rag = RAG_from_scratch()
+    
+    # Initialize session and RAG
+    initialize_session()
 
     # Sidebar with refined styling
     with st.sidebar:
@@ -176,11 +190,9 @@ def main():
         st.markdown("*Your digital memory companion*")
         st.markdown("---")
         
-        # Enhanced Mode Selection
         st.markdown("##### 🔄 Mode Selection")
         mode = st.toggle("Enable Chat Mode", value=False, key="mode_toggle")
         
-        # Visual indicator for current mode with styled box
         if mode:
             st.markdown('<div class="mode-indicator chat-mode">🗣️ Chat Mode Active</div>', unsafe_allow_html=True)
         else:
@@ -199,7 +211,6 @@ def main():
         st.markdown('<h1 class="modern-header">Inject Memory</h1>', unsafe_allow_html=True)
         st.markdown('<p class="modern-subheader">Share your thoughts, experiences, notes or plans below.</p>', unsafe_allow_html=True)
         
-        # Main text area
         text_key = f"memory_input_{st.session_state.get('text_key', 0)}"
         new_info = st.text_area(
             label="",
@@ -213,7 +224,7 @@ def main():
             if st.button("💾 Save Memory"):
                 if new_info:
                     with st.spinner("Saving..."):
-                        success = inject_information(new_info)
+                        success = st.session_state.rag.inject_information(new_info)
                         if success:
                             st.session_state.show_success = True
                         else:
@@ -226,30 +237,23 @@ def main():
                 st.success("Memory saved successfully!")
                 time.sleep(1.5)  
                 st.session_state.show_success = False  
-
-                # Clear the input field after displaying the message
                 clear_on_success()
                 st.rerun()  
 
         st.markdown('</div>', unsafe_allow_html=True)
     
     else:  # Chat Mode 
-        # Display existing messages
         for message in st.session_state.messages:
             with st.chat_message(message["role"]):
                 st.markdown(message["content"])
 
-        # Handle new user input
         if prompt := st.chat_input("Ask about your memories..."):
-            # Display user message
             with st.chat_message("user"):
                 st.markdown(prompt)
             st.session_state.messages.append({"role": "user", "content": prompt})
 
-            # Display assistant response with typing indicator
             assistant_placeholder = st.chat_message("assistant")
             with assistant_placeholder:
-                # Show typing indicator
                 typing_container = st.empty()
                 typing_container.markdown(
                     """
@@ -262,11 +266,8 @@ def main():
                     unsafe_allow_html=True
                 )
                 
-                # # Get response from RAG
-                # time.sleep(0.5)  # Optional: Small delay for better UX
-                response = rag.query(prompt)
+                response = st.session_state.rag.query(prompt)
                 
-                # Replace typing indicator with response
                 typing_container.markdown(response)
                 st.session_state.messages.append({"role": "assistant", "content": response})
 

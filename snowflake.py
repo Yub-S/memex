@@ -49,7 +49,7 @@ def execute_setup():
         # Execute all setup commands
         for command in setup_commands:
             cursor.execute(command)
-            
+            conn.commit()
         # Query and print results
         cursor.execute("SELECT * FROM TEXT_PARAGRAPHS_TABLE")
         results = cursor.fetchall()
@@ -87,5 +87,5 @@ def info_check():
         conn.close()
 
 if __name__ == "__main__":
-    #execute_setup()
-    info_check()
+    execute_setup()
+    #info_check()
