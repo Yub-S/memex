@@ -13,6 +13,8 @@ from trulens.providers.cortex.provider import Cortex
 from trulens.core import Feedback
 from trulens.core import Select
 import numpy as np
+from trulens.core import TruSession
+from trulens.connectors.snowflake import SnowflakeConnector
 
 load_dotenv()
 
@@ -46,10 +48,20 @@ class DateStandardizer:
             else:
                 prompt = f"""Current date is {current_date['full_date']} at {current_date['time']}.
                 1. Convert any relative date references (today, tomorrow, next week, etc.) in this text to their actual dates.
-                2. Add 'on [date] (with day also)' where appropriate but don't change any other information like the actual text.
+                2. you can add 'on [date] (with day also)' where appropriate but don't change any other information like the actual text.
                 3. At the end of the text, add a new line and append:
                    "(conversation happened on {current_date['full_date']} at {current_date['time']})"
                 
+                Example input:
+                    "Yesterday, I had a lot of fun."
+                    "Next Monday, I have a meeting with my friends."
+                    "Last Sunday, we went hiking."
+
+                Expected output:
+                    "yesterday(On January 1, 2025), I had a lot of fun."
+                    "next monday(On January 12, 2025), I have a meeting with my friends."
+                    "last sunday(On December 28, 2024), we went hiking."
+
                 Original text: "{text}"
                 Only output the converted text with no explanations or additional text."""
             
@@ -143,24 +155,27 @@ class RAG_from_scratch:
 
     @instrument
     def generate_completion(self, query: str, context_str: list) -> str:
-        prompt = f"""You are a personal AI assistant who helps the user recall and elaborate on their past thoughts, plans, and discussions.
-        You have access to the user's personal notes and memories.
+            prompt = f"""You are memex, the user's personal digital memory companion. You have a perfect recollection of everything they've shared with you. You don't just store memories - you understand and recall them with the warmth and understanding of a close friend who was there for each moment.
+            
+            User's current question: {query}
 
-        Context of previous discussions:
-        <context>
-        {context_str}
-        </context>
+            Based on this question, here are the most relevant memories and notes they've shared:
+            <memories>
+            {context_str}
+            </memories>
 
-        User's current question: {query}
 
-        Based on the context and your understanding, provide a helpful and precise response.
-        If the context directly addresses the question, use those details.
-        If not, respond based on the most relevant information available.
-        Always be supportive and sound like a trusted personal assistant.
+            When responding:
+            - If you clearly remember something (it's in the memories), respond with certainty and personal connection like "Oh yes, I remember when you told me about..." or "Ah, that was the day when..."
+            - If the memory is related to multiple connected experiences, weave them together naturally like "That reminds me of when you also mentioned..."
+            - If the question isn't directly covered in the memories but related content exists, gently bridge to what you do know: "While we haven't specifically discussed that, I remember you mentioning..."
+            - If you don't have any related memories to share, be honest: "You haven't shared any memories with me about that yet, but I'm here to listen when you do."
+            
+            Always maintain a warm, personal tone while being precise with details from their memories. Respond conversationally, as if you're helping them rediscover their own experiences.
 
-        Respond with a clear, natural text response. Do not use any special formatting or JSON structure.
-        """
-        return Complete("mistral-large2", prompt, session=self.session)
+            Important: Never invent or assume details that weren't shared in their memories. Stick to what they've actually told you.
+            """
+            return Complete("mistral-large2", prompt, session=self.session)
 
     @instrument
     def query(self, query: str) -> str:

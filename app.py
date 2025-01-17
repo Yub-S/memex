@@ -235,7 +235,7 @@ def main():
         with col3:
             if st.session_state.show_success:
                 st.success("Memory saved successfully!")
-                time.sleep(1.5)  
+                time.sleep(0.85)  
                 st.session_state.show_success = False  
                 clear_on_success()
                 st.rerun()  
