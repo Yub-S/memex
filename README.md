@@ -1,10 +1,10 @@
 # memex
-memex is your personal memory companion that brings Vannevar Bush's vision to life. Using advanced RAG technology, it helps preserve and reconnect you with your memories, thoughts, and experiences in a way that feels natural and meaningful - like talking to a friend who never forgets.
+memex is your personal memory companion designed to preserve your memories, thoughts, and experiences. Unlike traditional note-taking tools, it helps you reconnect with your past self by bringing memories to life in a meaningful way.
 
 ## Project Structure
 ```bash
 ├── app.py           # Streamlit frontend interface
-├── rag.py           # RAG implementation using Snowflake Cortex Search
+├── rag.py           # RAG implementation using Snowflake Cortex Search and mixtral llm
 ├── snowflake.py     # Initial Snowflake setup (database, schema, table, search engine)
 └── trulens.ipynb       # RAG evaluation using TruLens
 ```
@@ -14,7 +14,7 @@ memex is your personal memory companion that brings Vannevar Bush's vision to li
 1. Clone the repository:
 
     ```bash
-    git clone https://github.com/yourusername/memex.git
+    git clone https://github.com/Yub-S/memex
     cd memex
     ```
 
