@@ -221,7 +221,7 @@ def main():
         
         col1, col2, col3 = st.columns([2,1,2])
         with col2:
-            if st.button("💾 Save Memory"):
+            if st.button(" Tell memex"):
                 if new_info:
                     with st.spinner("Saving..."):
                         success = st.session_state.rag.inject_information(new_info)
