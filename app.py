@@ -199,6 +199,14 @@ def main():
             st.markdown('<div class="mode-indicator storage-mode">💾 Memory Storage Mode Active</div>', unsafe_allow_html=True)
         st.markdown("---")
 
+        with st.expander("⚡ Read Before Chatting"):
+            st.markdown("""
+            After storing a new memory, please wait 1 minute before querying it in Chat Mode. 
+            The cortex search service needs to get updated for your new content.
+            
+            You can continue to interact with your previously stored memories during this time.
+            """)
+
     if 'messages' not in st.session_state:
         st.session_state.messages = []
 
