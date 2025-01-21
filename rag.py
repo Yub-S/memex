@@ -94,7 +94,7 @@ class CortexSearchRetriever:
         cortex_search_service = (
             root.databases[os.getenv("SNOWFLAKE_DATABASE")]
             .schemas[os.getenv("SNOWFLAKE_SCHEMA")]
-            .cortex_search_services["MEMEX_SEARCH_SERVICE"]
+            .cortex_search_services[os.getenv("SNOWFLAKE_CORTEX_SEARCH")]
         )
         resp = cortex_search_service.search(
             query=query,
