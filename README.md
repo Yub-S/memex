@@ -4,9 +4,9 @@ memex is your personal memory companion designed to preserve your memories, thou
 ## Project Structure
 ```bash
 ├── app.py           # Streamlit frontend interface
-├── rag.py           # RAG implementation using Snowflake Cortex Search and mixtral llm
+├── rag.py           # RAG implementation using Snowflake Cortex Search and mistral llm
 ├── snowflake.py     # Initial Snowflake setup (database, schema, table, search engine)
-└── trulens.ipynb       # RAG evaluation using TruLens
+└── trulens.ipynb    # RAG evaluation using TruLens
 ```
 
 ## How to Run Locally
@@ -56,10 +56,10 @@ memex is your personal memory companion designed to preserve your memories, thou
 
     ```env
     SNOWFLAKE_WAREHOUSE="COMPUTE_WH"
-    SNOWFLAKE_DATABASE="MINDBOOKLM"
+    SNOWFLAKE_DATABASE="MEMEX"
     SNOWFLAKE_SCHEMA="DATA"
     SNOWFLAKE_ROLE="ACCOUNTADMIN"
-    SNOWFLAKE_CORTEX_SEARCH="MINDBOOK_SEARCH_SERVICE"
+    SNOWFLAKE_CORTEX_SEARCH="MEMEX_SEARCH_SERVICE"
     ```
 
     **Note:** Adjust these values if you modified them in `snowflake.py`.

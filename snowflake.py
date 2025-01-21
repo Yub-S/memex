@@ -20,8 +20,8 @@ def execute_setup():
 
     # Create database and schema
     setup_commands = [
-        "CREATE DATABASE IF NOT EXISTS MINDBOOKLM",
-        "USE DATABASE MINDBOOKLM",
+        "CREATE DATABASE IF NOT EXISTS MEMEX",
+        "USE DATABASE MEMEX",
         "CREATE SCHEMA IF NOT EXISTS DATA",
         
         # Create table
@@ -34,7 +34,7 @@ def execute_setup():
         
         # Create search service
         """
-        CREATE OR REPLACE CORTEX SEARCH SERVICE MINDBOOK_SEARCH_SERVICE
+        CREATE OR REPLACE CORTEX SEARCH SERVICE MEMEX_SEARCH_SERVICE
         ON TEXT_CONTENT
         WAREHOUSE = COMPUTE_WH
         TARGET_LAG = '1 minute'
@@ -70,7 +70,7 @@ def info_check():
     conn = create_snowflake_connection()
     cursor = conn.cursor()
     try:
-        cursor.execute("USE DATABASE MINDBOOKLM")
+        cursor.execute("USE DATABASE MEMEX")
         cursor.execute("USE SCHEMA DATA")
         # Query and print results
         cursor.execute("SELECT * FROM TEXT_PARAGRAPHS_TABLE")
